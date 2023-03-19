@@ -1,43 +1,155 @@
 {
-  "name": "vscode-power-measurement",
-  "displayName": "VSCode Power Measurement",
-  "description": "Gives power usage statistics when you run programs in VSCode",
-  "version": "0.0.1",
-  "engines": {
-    "vscode": "^1.76.0"
-  },
-  "categories": [
-    "Other"
-  ],
-  "activationEvents": [],
-  "main": "./out/extension.js",
-  "contributes": {
-    "commands": [
-      {
-        "command": "vscode-power-measurement.helloWorld",
-        "title": "Hello World"
-      }
-    ]
-  },
-  "scripts": {
-    "vscode:prepublish": "npm run compile",
-    "compile": "tsc -p ./",
-    "watch": "tsc -watch -p ./",
-    "pretest": "npm run compile && npm run lint",
-    "lint": "eslint src --ext ts",
-    "test": "node ./out/test/runTest.js"
-  },
-  "devDependencies": {
-    "@types/vscode": "^1.76.0",
-    "@types/glob": "^8.1.0",
-    "@types/mocha": "^10.0.1",
-    "@types/node": "16.x",
-    "@typescript-eslint/eslint-plugin": "^5.53.0",
-    "@typescript-eslint/parser": "^5.53.0",
-    "eslint": "^8.34.0",
-    "glob": "^8.1.0",
-    "mocha": "^10.2.0",
-    "typescript": "^4.9.5",
-    "@vscode/test-electron": "^2.2.3"
-  }
+	"name": "vscode-power-measurement",
+	"displayName": "VSCode Power Measurement",
+	"description": "Gives power usage statistics when you run programs in VSCode",
+	"version": "0.0.1",
+	"publisher": "vscode-power-measurement",
+	"license": "MIT",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/VSCode-Power-Measurement/extension"
+	},
+	"engines": {
+		"vscode": "^1.76.0"
+	},
+	"categories": [
+		"Other"
+	],
+	"activationEvents": [],
+	"main": "./out/extension.js",
+	"contributes": {
+		"viewsContainers": {
+			"activitybar": [
+				{
+					"id": "power-measurement",
+					"title": "Power Measurement",
+					"icon": "$(symbol-event)"
+				}
+			]
+		},
+		"views": {
+			"power-measurement": [
+				{
+					"type": "tree",
+					"id": "powerMeasurement.resultsView",
+					"name": "Overview"
+				},
+				{
+					"type": "webview",
+					"id": "powerMeasurement.measuringView",
+					"name": "Measurement"
+				}
+			]
+		},
+		"menus": {
+			"view/title": [
+				{
+					"when": "view == powerMeasurement.resultsView",
+					"command": "powerMeasurement.openMeasurements",
+					"group": "navigation"
+				},
+				{
+					"when": "view == powerMeasurement.resultsView",
+					"command": "powerMeasurement.saveMeasurements",
+					"group": "navigation"
+				},
+				{
+					"when": "view == powerMeasurement.resultsView",
+					"command": "powerMeasurement.clearMeasurements",
+					"group": "navigation"
+				},
+				{
+					"when": "view == powerMeasurement.measuringView && !powerMeasurement.measuring",
+					"command": "powerMeasurement.startMeasurement",
+					"group": "navigation@2"
+				},
+				{
+					"when": "view == powerMeasurement.measuringView && powerMeasurement.measuring",
+					"command": "powerMeasurement.stopMeasurement",
+					"group": "navigation@2"
+				},
+				{
+					"when": "view == powerMeasurement.measuringView && !powerMeasurement.hooked",
+					"command": "powerMeasurement.hookStopStart",
+					"group": "navigation@1"
+				},
+				{
+					"when": "view == powerMeasurement.measuringView && powerMeasurement.hooked",
+					"command": "powerMeasurement.unhookStopStart",
+					"group": "navigation@1"
+				}
+			]
+		},
+		"commands": [
+			{
+				"command": "powerMeasurement.hookStopStart",
+				"category": "Power Measurement",
+				"title": "Hook to Start and Stop",
+				"icon": "$(unlock)"
+			},
+			{
+				"command": "powerMeasurement.unhookStopStart",
+				"category": "Power Measurement",
+				"title": "Unhook from Start and Stop",
+				"icon": "$(lock)"
+			},
+			{
+				"command": "powerMeasurement.startMeasurement",
+				"category": "Power Measurement",
+				"title": "Start Measurement",
+				"icon": "$(debug-start)"
+			},
+			{
+				"command": "powerMeasurement.stopMeasurement",
+				"category": "Power Measurement",
+				"title": "Stop Measurement",
+				"icon": "$(debug-stop)"
+			},
+			{
+				"command": "powerMeasurement.openMeasurements",
+				"category": "Power Measurement",
+				"title": "Open Measurements",
+				"icon": "$(files)"
+			},
+			{
+				"command": "powerMeasurement.saveMeasurements",
+				"category": "Power Measurement",
+				"title": "Save Measurements",
+				"icon": "$(save-all)"
+			},
+			{
+				"command": "powerMeasurement.clearMeasurements",
+				"category": "Power Measurement",
+				"title": "Clear Measurements",
+				"icon": "$(clear-all)"
+			}
+		]
+	},
+	"scripts": {
+		"install:all": "npm install && cd webview-ui && npm install",
+		"webview:dev": "cd webview-ui && npm run dev",
+		"webview:build": "cd webview-ui && npm run build",
+		"webview:preview": "cd webview-ui && npm run preview",
+		"vscode:prepublish": "npm run compile",
+		"compile": "tsc -p ./",
+		"watch": "tsc -watch -p ./",
+		"pretest": "npm run compile && npm run lint",
+		"lint": "eslint . --ext js,ts,vue",
+		"lint:fix": "eslint . --ext js,ts,vue --fix",
+		"test": "node ./out/test/runTest.js"
+	},
+	"devDependencies": {
+		"@types/glob": "^8.1.0",
+		"@types/node": "16.x",
+		"@types/vscode": "^1.76.0",
+		"@typescript-eslint/eslint-plugin": "^5.53.0",
+		"@typescript-eslint/parser": "^5.53.0",
+		"@vscode/codicons": "0.0.20",
+		"chart.js": "^4.2.1",
+		"eslint": "^8.34.0",
+		"eslint-plugin-vue": "^9.9.0",
+		"glob": "^8.1.0",
+		"typescript": "^4.9.5",
+		"vuex": "^4.1.0"
+	}
 }

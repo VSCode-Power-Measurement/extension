@@ -1,26 +1,73 @@
-// The module 'vscode' contains the VS Code extensibility API
-// Import the module and reference it with the alias vscode in your code below
-import * as vscode from 'vscode';
+import * as vscode from 'vscode'
+import { MeasuringViewProvider } from './views/MeasuringViewProvider'
+import { Measurer } from './Measurer'
+import { MeasurementProvider } from './views/MeasurementProvider'
 
-// This method is called when your extension is activated
-// Your extension is activated the very first time the command is executed
 export function activate(context: vscode.ExtensionContext) {
 
-	// Use the console to output diagnostic information (console.log) and errors (console.error)
-	// This line of code will only be executed once when your extension is activated
-	console.log('Congratulations, your extension "vscode-power-measurement" is now active!');
+	const measurer = new Measurer()
+	const provider = new MeasuringViewProvider(context.extensionUri, measurer)
+	const measurementProvider = new MeasurementProvider()
 
-	// The command has been defined in the package.json file
-	// Now provide the implementation of the command with registerCommand
-	// The commandId parameter must match the command field in package.json
-	let disposable = vscode.commands.registerCommand('vscode-power-measurement.helloWorld', () => {
-		// The code you place here will be executed every time your command is executed
-		// Display a message box to the user
-		vscode.window.showInformationMessage('Hello World from VSCode Power Measurement!');
-	});
+	const measurementTreeView = vscode.window.createTreeView("powerMeasurement.resultsView", { treeDataProvider: measurementProvider})
 
-	context.subscriptions.push(disposable);
+	measurementTreeView.onDidChangeSelection((e) => {
+		const selectedNode = e.selection[0]
+		console.log(selectedNode.id)
+	})
+
+	context.subscriptions.push(
+		vscode.window.registerWebviewViewProvider(MeasuringViewProvider.viewType, provider))
+
+	context.subscriptions.push(
+		vscode.commands.registerCommand('powerMeasurement.startMeasurement', () => {
+			measurer.start()
+		}))
+
+	context.subscriptions.push(
+		vscode.commands.registerCommand('powerMeasurement.stopMeasurement', () => {
+			measurer.stop()
+		}))
+
+	context.subscriptions.push(
+		vscode.commands.registerCommand('powerMeasurement.hookStopStart', () => {
+			measurer.hook()
+		}))
+	
+	context.subscriptions.push(
+		vscode.commands.registerCommand('powerMeasurement.unhookStopStart', () => {
+			measurer.unhook()
+		}))
+	
+	context.subscriptions.push(
+		vscode.commands.registerCommand('powerMeasurement.openMeasurements', () => {
+			provider.open()
+		}))
+
+	context.subscriptions.push(
+		vscode.commands.registerCommand('powerMeasurement.saveMeasurements', () => {
+			provider.save()
+		}))
+
+	
+	context.subscriptions.push(
+		vscode.commands.registerCommand('powerMeasurement.clearMeasurements', () => {
+			provider.clear()
+		}))
+	
+	context.subscriptions.push(
+		vscode.debug.onDidStartDebugSession((_) => {
+			if (measurer.isHooked()) {
+				measurer.start()
+			}
+		}))
+
+	context.subscriptions.push(
+		vscode.debug.onDidTerminateDebugSession((_) => {
+			if (measurer.isHooked()) {
+				measurer.stop()
+			}
+		}))
 }
 
-// This method is called when your extension is deactivated
-export function deactivate() {}
+// export function deactivate() {}
