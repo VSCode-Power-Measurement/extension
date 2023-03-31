@@ -5,8 +5,8 @@ import { MeasurementProvider } from './views/MeasurementProvider'
 
 export function activate(context: vscode.ExtensionContext) {
 
-	const measurer = new Measurer()
-	const provider = new MeasuringViewProvider(context.extensionUri, measurer)
+	const provider = new MeasuringViewProvider(context.extensionUri)
+	const measurer = new Measurer((message) => provider.sendMeasurement(message))
 	const measurementProvider = new MeasurementProvider()
 
 	const measurementTreeView = vscode.window.createTreeView("powerMeasurement.resultsView", { treeDataProvider: measurementProvider})
@@ -33,12 +33,12 @@ export function activate(context: vscode.ExtensionContext) {
 		vscode.commands.registerCommand('powerMeasurement.hookStopStart', () => {
 			measurer.hook()
 		}))
-	
+
 	context.subscriptions.push(
 		vscode.commands.registerCommand('powerMeasurement.unhookStopStart', () => {
 			measurer.unhook()
 		}))
-	
+
 	context.subscriptions.push(
 		vscode.commands.registerCommand('powerMeasurement.openMeasurements', () => {
 			provider.open()
@@ -49,12 +49,12 @@ export function activate(context: vscode.ExtensionContext) {
 			provider.save()
 		}))
 
-	
+
 	context.subscriptions.push(
 		vscode.commands.registerCommand('powerMeasurement.clearMeasurements', () => {
 			provider.clear()
 		}))
-	
+
 	context.subscriptions.push(
 		vscode.debug.onDidStartDebugSession((_) => {
 			if (measurer.isHooked()) {

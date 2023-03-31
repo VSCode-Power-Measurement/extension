@@ -11,13 +11,16 @@ export class MeasuringViewProvider implements vscode.WebviewViewProvider {
 
 	constructor(
 		private readonly _extensionUri: vscode.Uri,
-		private _measurer : Measurer
 	) {
+	}
+
+	public sendMeasurement(message: any) {
+		this._view?.webview.postMessage(message)
 	}
 
 	public resolveWebviewView(
 		webviewView: vscode.WebviewView,
-		context: vscode.WebviewViewResolveContext,
+		_context: vscode.WebviewViewResolveContext,
 		_token: vscode.CancellationToken,
 	) {
 		this._view = webviewView
@@ -38,12 +41,6 @@ export class MeasuringViewProvider implements vscode.WebviewViewProvider {
 				webviewView.webview.postMessage({command: 'setup', type: 'activeMeasuring'})
 			}
 		})
-
-		setInterval(() => {
-			if (!this._measurer.isMeasuring()) { return }
-			const measurement = Math.floor(Math.random() * 5) + 40
-			webviewView.webview.postMessage({command: 'measurement', data: measurement})
-		}, 1000)
 	}
 
 	public start() {

@@ -3,10 +3,12 @@ import * as child_process from 'child_process'
 
 export class Measurer {
 	private _measuring = false
+	private scaphandre: child_process.ChildProcessWithoutNullStreams | null = null
 	private _hooked = false
 	private pid = ""
+	private orange = vscode.window.createOutputChannel("Orange")
 
-	constructor() {
+	constructor(private sendMessage: (message: any) => void) {
 		this.setMeasuring(false)
 		this.setHooked(true)
 	}
@@ -36,19 +38,33 @@ export class Measurer {
 
 		// If a selection was made, log the PID to the console
 		if (!selection) {return}
-		
-		console.log(`Selected process: ${selection.label}`)
+
+		this.orange.appendLine(`Selected process: ${selection.label}`)
 
 		this.pid = selection.label
+
+		this.spawnMeasurer()
 
 		this.setMeasuring(true)
 	}
 
 	stop() {
+		this.orange.appendLine(`Sop is called`)
 		if (!this.isMeasuring()) {return}
+		this.orange.appendLine(`We were running, stopping...`)
 
+		if (!this.scaphandre || !this.scaphandre.pid) {
+			this.orange.appendLine(`Scaphandre wasn't running`)
+			return
+		}
 
-		this.setMeasuring(false)
+		// Dirty hack: scaphandre runs as root and runs as a child of sudo.
+		// We have the PID of sudo, but killing sudo orphanes the children
+		// We can kill the process group of sudo, but we don't have permission to kill scaphandre, as we aren't root.
+		// The approach taken involves closing stdout to cause scaphandre to panic and exit.
+		this.scaphandre.stdout.destroy()
+
+		// Postpone calling `setMeasuring` to close event
 	}
 
 	hook() {
@@ -79,5 +95,50 @@ export class Measurer {
 
 		// Show the etQuickPick to the user and wait for their selection
 		return vscode.window.showQuickPick(items, { placeHolder: 'Select a process' })
+	}
+
+	async spawnMeasurer() {
+		this.scaphandre = child_process.spawn("sudo", ["-S", "scaphandre", "json", "-t", "18446744073709551615", "-s", "1", "--max-top-consumers", "15"])
+
+		this.scaphandre.stdout.on('data', (data) => {
+			const parsed = JSON.parse(data)
+
+			const powerConsumption = parsed.consumers.find((el: any) => el.pid == this.pid)?.consumption ?? 0
+			const watts = powerConsumption / 1000000
+			this.orange.appendLine(`measured: ${watts}W`)
+
+			this.sendMessage({command: 'measurement', data: watts})
+		})
+
+		this.scaphandre.stderr.on('data', (data) => {
+			this.orange.appendLine(`stderr output: ${data}`)
+			if (`${data}`.startsWith("[sudo] password for")) {
+				this.askPassword()
+			}
+		})
+
+		this.scaphandre.on('close', (code) => {
+			this.orange.appendLine(`child process exited with code ${code}`)
+
+			this.setMeasuring(false)
+		})
+	}
+
+	async askPassword() {
+		const options: vscode.InputBoxOptions = {
+			title: "Sudo password",
+			password: true,
+			prompt: "To read power measurements, we need root access. Please fill in your password.",
+		}
+
+		this.orange.appendLine(`Asking user for password...`)
+		const password = await vscode.window.showInputBox(options)
+
+		if (!this.scaphandre) {
+			this.orange.appendLine(`Scaphandre somehow didn't start, ignoring`)
+			return
+		}
+
+		this.scaphandre.stdin.write(`${password}\n`)
 	}
 }
