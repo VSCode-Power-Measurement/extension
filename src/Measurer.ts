@@ -1,5 +1,7 @@
 import * as vscode from 'vscode'
 import * as child_process from 'child_process'
+import * as fs from 'fs'
+import path = require('path')
 import { MeasurementProvider } from './views/MeasurementProvider'
 
 export class Measurer {
@@ -35,14 +37,15 @@ export class Measurer {
 	async start() {
 		if (this.isMeasuring()) {return}
 
+		if (!await this.canRunScaphandre()) {return}
+
 		const selection = await this.pickProcess()
 
-		// If a selection was made, log the PID to the console
+		// If no selection was made, don't start
 		if (!selection) {return}
 
-		this.orange.appendLine(`Selected process: ${selection.label}`)
-
 		this.pid = selection.label
+		this.orange.appendLine(`Selected process: ${this.pid}`)
 
 		if (selection.detail !== undefined) {
 			this.measurementProvider.startNewMeasurement(selection.detail)
@@ -84,6 +87,58 @@ export class Measurer {
 		this.setHooked(false)
 	}
 
+	async canRunScaphandre() {
+		const canAccess = (path: fs.PathLike, mode: number | undefined) => new Promise<boolean>((resolve) => {
+			fs.access(path, mode, (err) => err ? resolve(false) : resolve(true))
+		})
+
+		const unsupported = async () => {
+			const message = "Unfortunately your system doesn't seem to be compatible. Please ensure your device is compatibe and you've loaded the intel_rapl or intel_rapl_common kernel modules."
+			const details = "This extension uses Scaphandre to measure power consumption. Please check if your system is [compatible with Scaphandre](https://hubblo-org.github.io/scaphandre-documentation/compatibility.html). This extension imposes some further limits on compatibility, most of which we hope to resolve in the future. Currently we only support the 'PowercapRAPL' sensor on linux devices not running in a virtual machine.\nIf you run this extension in a container, please ensure that '/sys/class/powercap' and '/proc' are bind-mounted from the host and readable in the container."
+			const res = await vscode.window.showErrorMessage(message, {modal: true, detail: details})
+			this.orange.appendLine(res || "empty")
+			return false
+		}
+		const noAccess = async (_files: string[]) => {
+			const message = `Unfortunately you don't have read access to the files we need in ${powercapDir}! You need sudo rights to fix this.`
+			const details = `We need read access to all 'energy_uj' files in ${powercapDir}.`
+			const buttons = [/* {title: "Fix automatically"}, */ {title: "Fix it myself", isCloseAffordance: true}]
+			const res = await vscode.window.showErrorMessage(message, {modal: true, detail: details}, ...buttons)
+			this.orange.appendLine(res?.title || "empty")
+			return false
+		}
+
+		const powercapDir = "/sys/devices/virtual/powercap"
+
+		// check if powercap is available and files are readable
+		try {
+			const files: string[] = []
+			const canAccessAll: Promise<boolean>[] = []
+			for await (const file of searchFiles(powercapDir, "energy_uj")) {
+				// No read access to powercap files
+				files.push(file)
+				// Start statting the file
+				canAccessAll.push(canAccess(file, fs.constants.R_OK))
+			}
+			// Wait for result of all stats
+			// If one of them returns no access, show error message
+			if (!(await Promise.all(canAccessAll)).every((el) => el)) { return noAccess(files) }
+		} catch (err) {
+			if (err && isErrnoException(err)) {
+				switch (err.code) {
+				case 'ENOENT':
+					// Powercap folder doesn't exist
+					return unsupported()
+				}
+			}
+
+			// Either if was false, or switch didn't match, so rethrow
+			throw err
+		}
+
+		return true
+	}
+
 	async pickProcess() {
 		// Use the child_process module to execute the "ps" command and get a list of running processes
 		let processes = child_process.execSync('ps -axo pid,command').toString().split('\n')
@@ -112,7 +167,7 @@ export class Measurer {
 
 			const watts = powerConsumption / 1000000
 			this.orange.appendLine(`measured: ${watts}W`)
-			
+
 			this.measurementProvider.addValue(watts)
 		})
 
@@ -148,4 +203,46 @@ export class Measurer {
 
 		this.scaphandre.stdin.write(`${password}\n`)
 	}
+}
+
+/// Breadth-first algorithm for recursively searching a folder for files with the specified name
+async function* searchFiles(start: string, filename: string): AsyncGenerator<string> {
+	const promises: Set<Promise<fs.Dirent[]>> = new Set()
+
+	const ls = async (dir: string) => {
+		const promise = fs.promises.readdir(dir, { withFileTypes: true })
+		promises.add(promise)
+		const result = await promise
+		promises.delete(promise)
+		return result
+	}
+
+	promises.add(ls(start))
+
+	while (promises.size > 0) {
+		const dirents = await Promise.race(promises)
+		for (const dirent of dirents) {
+			const res = path.resolve(start, dirent.name)
+			if (dirent.isDirectory()) {
+				promises.add(ls(res))
+			} else if (dirent.name === filename) {
+				yield res
+			}
+		}
+	}
+}
+
+function isErrnoException(error: unknown): error is NodeJS.ErrnoException {
+	return isArbitraryObject(error) &&
+	error instanceof Error &&
+		(typeof error.errno === "number" || typeof error.errno === "undefined") &&
+		(typeof error.code === "string" || typeof error.code === "undefined") &&
+		(typeof error.path === "string" || typeof error.path === "undefined") &&
+		(typeof error.syscall === "string" || typeof error.syscall === "undefined")
+}
+
+type ArbitraryObject = { [key: string]: unknown; }
+
+function isArbitraryObject(potentialObject: unknown): potentialObject is ArbitraryObject {
+	return typeof potentialObject === "object" && potentialObject !== null
 }
