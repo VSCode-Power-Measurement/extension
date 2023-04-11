@@ -5,9 +5,9 @@ import { MeasurementProvider } from './views/MeasurementProvider'
 
 export function activate(context: vscode.ExtensionContext) {
 
-	const provider = new MeasuringViewProvider(context.extensionUri)
-	const measurer = new Measurer((message) => provider.sendMeasurement(message))
-	const measurementProvider = new MeasurementProvider()
+	const measuringViewProvider = new MeasuringViewProvider(context.extensionUri)
+	const measurementProvider = new MeasurementProvider(measuringViewProvider)
+	const measurer = new Measurer(measurementProvider)
 
 	const measurementTreeView = vscode.window.createTreeView("powerMeasurement.resultsView", { treeDataProvider: measurementProvider})
 
@@ -17,7 +17,7 @@ export function activate(context: vscode.ExtensionContext) {
 	})
 
 	context.subscriptions.push(
-		vscode.window.registerWebviewViewProvider(MeasuringViewProvider.viewType, provider))
+		vscode.window.registerWebviewViewProvider(MeasuringViewProvider.viewType, measuringViewProvider))
 
 	context.subscriptions.push(
 		vscode.commands.registerCommand('powerMeasurement.startMeasurement', () => {
@@ -41,18 +41,18 @@ export function activate(context: vscode.ExtensionContext) {
 
 	context.subscriptions.push(
 		vscode.commands.registerCommand('powerMeasurement.openMeasurements', () => {
-			provider.open()
+			measuringViewProvider.open()
 		}))
 
 	context.subscriptions.push(
 		vscode.commands.registerCommand('powerMeasurement.saveMeasurements', () => {
-			provider.save()
+			measuringViewProvider.save()
 		}))
 
 
 	context.subscriptions.push(
 		vscode.commands.registerCommand('powerMeasurement.clearMeasurements', () => {
-			provider.clear()
+			measuringViewProvider.clear()
 		}))
 
 	context.subscriptions.push(

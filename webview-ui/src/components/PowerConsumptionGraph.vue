@@ -1,6 +1,5 @@
 <script setup>
-import { reactive, computed } from 'vue'
-import { useStore } from 'vuex'
+import { reactive, computed, toRaw } from 'vue'
 import {
 	Chart as ChartJS,
 	CategoryScale,
@@ -23,7 +22,7 @@ ChartJS.register(
 	Legend
 )
 
-const store = useStore()
+const measurement = defineProps(['consumptions', 'maximum', 'total', 'length'])
 
 const colors = reactive({
 	foreground: getComputedStyle(document.documentElement).getPropertyValue('--vscode-foreground') || '#FFF',
@@ -43,44 +42,34 @@ const observer = new MutationObserver(mutationsList => {
 
 observer.observe(document.documentElement, { attributes: true, attributeFilter: ['style', 'class'] })
 
-let data = computed(() => { 
-	let powerConsumptionMeasurements = store.state.measurements
+const data = computed(() => {
+	measurement.length
+	const {...dataobject} = measurement.consumptions
+
 	return {
-		labels: Array.from({ length: powerConsumptionMeasurements.length }, (_, index) => index + 1 - powerConsumptionMeasurements.length),
+		// labels: measurement.index.nested,
 		datasets: [
 			{
 				label: 'Power Consumption',
 				backgroundColor: '#FFA500',
-				data: powerConsumptionMeasurements,
+				data: dataobject,
 				borderWidth: 1,
 				borderColor: '#FFA500',
 				fill: false,
 				pointRadius: 1,
 			}
 		]
-	}})
-
-function getMaxWithIndex(arr) {
-	let max = arr[0]
-	let index = 0
-
-	for (let i = 1; i < arr.length; i++) {
-		if (arr[i] > max) {
-			max = arr[i]
-			index = i
-		}
 	}
+})
 
-	return {max, index}
-}
-
-let options = computed(() => { return {
+const options = computed(() => { return {
 	responsive: true,
 	maintainAspectRatio: false,
 	plugins: {
 		title: {
 			display: false,
 			color: colors.foreground,
+			text: `Average Power Consumption: ${measurement.maximum / measurement.consumptions.length} W`,
 		},
 		legend: {
 			display: false,
@@ -93,6 +82,11 @@ let options = computed(() => { return {
 	},
 	scales: {
 		x: {
+			title: {
+				display: true,
+				text: 'time since start (s)',
+				color: colors.foreground,
+			},
 			ticks: {
 				color: colors.foreground,
 			},
@@ -101,8 +95,13 @@ let options = computed(() => { return {
 			},
 		},
 		y: {
+			title: {
+				display: true,
+				text: 'power consumption (W)',
+				color: colors.foreground,
+			},
 			min: 0,
-			max: store.state.maxPossible,
+			max: measurement.maximum,
 			ticks: {
 				color: colors.foreground,
 			},
@@ -110,36 +109,22 @@ let options = computed(() => { return {
 				color: colors.foreground,
 			},
 		}
-	}
+	},
 }})
 
-const maxLinePlugin = {
-	id: 'max-value',
-	beforeInit: ({ data, options }) => {
-		const totalPower = data.datasets[0].data.reduce((total, datapoint) => total + datapoint, 0)
-		const averagePower = totalPower / data.datasets[0].data.length
-		const titleText = `Average Power Consumption: ${averagePower.toFixed(2)} W`
-		options.plugins.title.text = titleText
-	},
-	afterDatasetDraw: ({ ctx, chartArea, scales: { x, y } }) => {
-		const maxPosy = y.getPixelForValue(store.state.max)
+// const currentValue = {
+// 	id: 'max-value',
+// 	afterDatasetDraw: ({ ctx, chartArea, scales: { x, y } }) => {
+// 		const lastVal = measurement.consumptions[measurement.consumptions.length - 1]
+// 		const lastPosy = y.getPixelForValue(lastVal)
+// 		const lastPosx = x.getPixelForValue(measurement.consumptions.length - 1)
 
-		ctx.beginPath()
-		ctx.moveTo(chartArea.left, maxPosy)
-		ctx.lineTo(chartArea.right, maxPosy)
-		ctx.strokeStyle = '#FF0000'
-		ctx.stroke()
+// 		ctx.fillStyle = '#FFA500'
+// 		ctx.fillText(`${lastVal}W`, lastPosx - 20, lastPosy + 10)
+// 	}
+// }
 
-		const lastVal = store.state.measurements[store.state.measurements.length - 1]
-		const lastPosy = y.getPixelForValue(lastVal)
-		const lastPosx = x.getPixelForValue(store.state.measurements.length - 1)
-
-		ctx.fillStyle = '#FFA500'
-		ctx.fillText(`${lastVal}W`, lastPosx - 20, lastPosy + 10)
-	}
-}
-
-ChartJS.register(maxLinePlugin)
+// ChartJS.register(currentValue)
 </script>
 
 <template>

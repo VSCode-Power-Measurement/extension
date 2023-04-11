@@ -1,7 +1,6 @@
 import * as vscode from 'vscode'
 import { getUri } from "../utilities/getUri"
 import { getNonce } from "../utilities/getNonce"
-import { Measurer } from '../Measurer'
 
 export class MeasuringViewProvider implements vscode.WebviewViewProvider {
 
@@ -14,8 +13,8 @@ export class MeasuringViewProvider implements vscode.WebviewViewProvider {
 	) {
 	}
 
-	public sendMeasurement(message: any) {
-		this._view?.webview.postMessage(message)
+	public sendMeasurement(consumption: number) {
+		this._view?.webview.postMessage({command: 'measurement', data: consumption})
 	}
 
 	public resolveWebviewView(
@@ -104,7 +103,7 @@ export class MeasuringViewProvider implements vscode.WebviewViewProvider {
 				<title>Measurement</title>
 			</head>
 			<body>
-				<div id="app"></div>
+				<div id="app" style="height: 100vh"></div>
 				<script type="module" nonce="${nonce}" src="${scriptUri}"></script>
 			</body>
 			</html>`

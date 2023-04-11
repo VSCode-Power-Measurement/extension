@@ -13,6 +13,7 @@
 	},
 	"devDependencies": {
 		"@vitejs/plugin-vue": "^4.1.0",
+		"pinia": "^2.0.34",
 		"vite": "^4.2.0",
 		"vue-chartjs": "^5.2.0"
 	}

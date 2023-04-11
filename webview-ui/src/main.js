@@ -1,7 +1,9 @@
 import { createApp } from 'vue'
+import { createPinia } from 'pinia'
 import './style.css'
 import ActiveMeasuring from './ActiveMeasuring.vue'
-import store from './stores/store.js'
+
+const pinia = createPinia()
 
 if (typeof acquireVsCodeApi !== 'undefined') {
 	// eslint-disable-next-line
@@ -13,7 +15,7 @@ if (typeof acquireVsCodeApi !== 'undefined') {
 		switch (message.type) {
 		case 'activeMeasuring':
 			createApp(ActiveMeasuring)
-				.use(store)
+				.use(pinia)
 				.mount('#app')
 			break
 		}
@@ -24,7 +26,6 @@ if (typeof acquireVsCodeApi !== 'undefined') {
 	})
 } else {
 	createApp(ActiveMeasuring)
-		.use(store)
+		.use(pinia)
 		.mount('#app')
-	window.store = store
 }

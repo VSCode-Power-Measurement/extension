@@ -1,5 +1,6 @@
 import * as vscode from 'vscode'
 import * as child_process from 'child_process'
+import { MeasurementProvider } from './views/MeasurementProvider'
 
 export class Measurer {
 	private _measuring = false
@@ -8,7 +9,7 @@ export class Measurer {
 	private pid = ""
 	private orange = vscode.window.createOutputChannel("Orange")
 
-	constructor(private sendMessage: (message: any) => void) {
+	constructor(private measurementProvider: MeasurementProvider) {
 		this.setMeasuring(false)
 		this.setHooked(true)
 	}
@@ -107,8 +108,7 @@ export class Measurer {
 			const watts = powerConsumption / 1000000
 			this.orange.appendLine(`measured: ${watts}W`)
 			
-			this.measurements
-			this.sendMessage({command: 'measurement', data: watts})
+			this.measurementProvider.addValue(watts)
 		})
 
 		this.scaphandre.stderr.on('data', (data) => {
