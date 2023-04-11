@@ -106,7 +106,8 @@ export class Measurer {
 			const powerConsumption = parsed.consumers.find((el: any) => el.pid == this.pid)?.consumption ?? 0
 			const watts = powerConsumption / 1000000
 			this.orange.appendLine(`measured: ${watts}W`)
-
+			
+			this.measurements
 			this.sendMessage({command: 'measurement', data: watts})
 		})
 

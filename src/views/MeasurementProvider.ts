@@ -2,6 +2,8 @@ import * as vscode from 'vscode'
 import { Measurement } from './objects/Measurement'
 
 export class MeasurementProvider implements vscode.TreeDataProvider<Measurement> {
+	private measurements: Measurement[] = []
+
 	getTreeItem(element: Measurement): vscode.TreeItem | Thenable<vscode.TreeItem> {
 		return element
 	}
