@@ -157,6 +157,11 @@ export class Measurer {
 	}
 
 	async spawnMeasurer() {
+		// -t is the time the measurement keeps running, set to the largest number it should accept
+		// so it keeps running until we stop it.
+		// -s is the interval, set to measure every second
+		// Output is JSON, as that's easy to parse in javascript
+		// --max-top-consumers is set to an arbitrary number such that our target program will probably be in it.
 		this.scaphandre = child_process.spawn("sudo", ["-S", "scaphandre", "json", "-t", "18446744073709551615", "-s", "1", "--max-top-consumers", "15"])
 
 		this.scaphandre.stdout.on('data', (data) => {
