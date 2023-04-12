@@ -13,7 +13,7 @@ export function activate(context: vscode.ExtensionContext) {
 
 	measurementTreeView.onDidChangeSelection((e) => {
 		const selectedNode = e.selection[0]
-		console.log(selectedNode.id)
+		selectedNode.openPanel(context.extensionUri)
 	})
 
 	context.subscriptions.push(

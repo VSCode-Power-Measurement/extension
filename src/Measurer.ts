@@ -44,6 +44,7 @@ export class Measurer {
 
 		this.pid = selection.label
 
+		this.measurementProvider.startNewMeasurement()
 		this.spawnMeasurer()
 
 		this.setMeasuring(true)
@@ -122,6 +123,7 @@ export class Measurer {
 			this.orange.appendLine(`child process exited with code ${code}`)
 
 			this.setMeasuring(false)
+			this.measurementProvider.endMeasurement()
 		})
 	}
 

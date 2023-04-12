@@ -82,29 +82,35 @@ export class MeasuringViewProvider implements vscode.WebviewViewProvider {
 		const stylesUri = getUri(webview, this._extensionUri, ["webview-ui", "dist", "assets", "index.css"])
 
 		// Use a nonce to only allow a specific script to be run.
-		const nonce = getNonce()
+		const scriptNonce = getNonce()
+		const styleNonce = getNonce()
 
 		return `<!DOCTYPE html>
 			<html lang="en">
 			<head>
 				<meta charset="UTF-8">
-
+		
 				<meta http-equiv="Content-Security-Policy" content="
 					default-src 'none';
-				 	font-src ${webview.cspSource};
-					style-src ${webview.cspSource};
-					script-src 'nonce-${nonce}';
+					font-src ${webview.cspSource};
+					style-src ${webview.cspSource} 'nonce-${styleNonce}';
+					script-src ${webview.cspSource} 'nonce-${scriptNonce}';
 				">
 
 				<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 				<link href="${stylesUri}" rel="stylesheet">
+				<style nonce="${styleNonce}">
+					#app {
+						height: calc(100vh - 20px);
+					}
+				</style>
 
 				<title>Measurement</title>
 			</head>
 			<body>
-				<div id="app" style="height: 100vh"></div>
-				<script type="module" nonce="${nonce}" src="${scriptUri}"></script>
+				<div id="app" type="measuring"></div>
+				<script type="module" nonce="${scriptNonce}" src="${scriptUri}"></script>
 			</body>
 			</html>`
 	}
