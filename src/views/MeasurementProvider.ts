@@ -3,7 +3,7 @@ import { Measurement } from './objects/Measurement'
 import { MeasuringViewProvider } from './MeasuringViewProvider'
 
 export class MeasurementProvider implements vscode.TreeDataProvider<Measurement> {
-	private measurements: Measurement[] = [new Measurement()]
+	private measurements: Measurement[] = []
 	private activeMeasurement: Measurement | null = null
 	private _onDidChangeTreeData: vscode.EventEmitter<Measurement | undefined | null | void> = new vscode.EventEmitter<Measurement | undefined | null | void>()
 	readonly onDidChangeTreeData: vscode.Event<Measurement | undefined | null | void> = this._onDidChangeTreeData.event
@@ -11,8 +11,17 @@ export class MeasurementProvider implements vscode.TreeDataProvider<Measurement>
 	constructor(private measuringViewProvider :MeasuringViewProvider) {
 	}
 
-	startNewMeasurement() {
-		this.activeMeasurement = new Measurement()
+	startNewMeasurement(process: string) {
+		const dateTime = new Date()
+		this.activeMeasurement = new Measurement(process, dateTime)
+		this.measuringViewProvider.set({
+			process: process,
+			dateTime: dateTime,
+			values: [],
+			maximum: 0,
+			total: 0,
+			length: 0,
+		})
 	}
 
 	endMeasurement() {

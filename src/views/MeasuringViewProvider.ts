@@ -14,7 +14,7 @@ export class MeasuringViewProvider implements vscode.WebviewViewProvider {
 	}
 
 	public sendMeasurement(consumption: number) {
-		this._view?.webview.postMessage({command: 'measurement', data: consumption})
+		this._view?.webview.postMessage({command: 'addValue', data: consumption})
 	}
 
 	public resolveWebviewView(
@@ -34,45 +34,12 @@ export class MeasuringViewProvider implements vscode.WebviewViewProvider {
 		}
 
 		webviewView.webview.html = this._getHtmlForWebview(webviewView.webview)
-
-		webviewView.webview.onDidReceiveMessage(data => {
-			if (data.command === 'setup') {
-				webviewView.webview.postMessage({command: 'setup', type: 'activeMeasuring'})
-			}
-		})
 	}
 
-	public start() {
+	public set(data: object) {
 		if (this._view) {
 			this._view.show?.(true)
-			this._view.webview.postMessage({ type: 'start' })
-		}
-	}
-
-	public stop() {
-		if (this._view) {
-			this._view.show?.(true)
-			this._view.webview.postMessage({ type: 'stop' })
-		}
-	}
-
-	public open() {
-		if (this._view) {
-			this._view.show?.(true)
-			this._view.webview.postMessage({ type: 'open' })
-		}
-	}
-
-	public save() {
-		if (this._view) {
-			this._view.show?.(true)
-			this._view.webview.postMessage({ type: 'save' })
-		}
-	}
-
-	public clear() {
-		if (this._view) {
-			this._view.webview.postMessage({ type: 'clear' })
+			this._view.webview.postMessage({ command: 'set', data })
 		}
 	}
 

@@ -11,6 +11,9 @@ import {
 	Legend
 } from 'chart.js'
 import { Line } from 'vue-chartjs'
+import { useMeasurement } from '../stores/measurement'
+
+const measurement = useMeasurement()
 
 ChartJS.register(
 	CategoryScale,
@@ -21,8 +24,6 @@ ChartJS.register(
 	Tooltip,
 	Legend
 )
-
-const measurement = defineProps(['consumptions', 'maximum', 'total', 'length'])
 
 const colors = reactive({
 	foreground: getComputedStyle(document.documentElement).getPropertyValue('--vscode-foreground') || '#FFF',
@@ -44,7 +45,7 @@ observer.observe(document.documentElement, { attributes: true, attributeFilter: 
 
 const data = computed(() => {
 	measurement.length
-	const {...dataobject} = measurement.consumptions
+	const {...dataobject} = measurement.values
 
 	return {
 		// labels: measurement.index.nested,
@@ -69,7 +70,7 @@ const options = computed(() => { return {
 		title: {
 			display: false,
 			color: colors.foreground,
-			text: `Average Power Consumption: ${measurement.maximum / measurement.consumptions.length} W`,
+			text: `Average Power Consumption: ${measurement.maximum / measurement.values.length} W`,
 		},
 		legend: {
 			display: false,
@@ -111,20 +112,6 @@ const options = computed(() => { return {
 		}
 	},
 }})
-
-// const currentValue = {
-// 	id: 'max-value',
-// 	afterDatasetDraw: ({ ctx, chartArea, scales: { x, y } }) => {
-// 		const lastVal = measurement.consumptions[measurement.consumptions.length - 1]
-// 		const lastPosy = y.getPixelForValue(lastVal)
-// 		const lastPosx = x.getPixelForValue(measurement.consumptions.length - 1)
-
-// 		ctx.fillStyle = '#FFA500'
-// 		ctx.fillText(`${lastVal}W`, lastPosx - 20, lastPosy + 10)
-// 	}
-// }
-
-// ChartJS.register(currentValue)
 </script>
 
 <template>

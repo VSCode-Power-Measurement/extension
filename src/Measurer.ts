@@ -44,7 +44,9 @@ export class Measurer {
 
 		this.pid = selection.label
 
-		this.measurementProvider.startNewMeasurement()
+		if (selection.detail !== undefined) {
+			this.measurementProvider.startNewMeasurement(selection.detail)
+		}
 		this.spawnMeasurer()
 
 		this.setMeasuring(true)
@@ -92,20 +94,22 @@ export class Measurer {
 		// Create an array of QuickPickItems from the output, with the PID as the label and the command as the detail
 		const items: vscode.QuickPickItem[] = processes.map(line => {
 			const [pid, command] = line.trim().split(' ', 2)
-			return { label: pid, detail: command }
+			return { label: pid, detail: command}
 		})
 
 		// Show the etQuickPick to the user and wait for their selection
-		return vscode.window.showQuickPick(items, { placeHolder: 'Select a process' })
+		return vscode.window.showQuickPick(items, { placeHolder: 'Select a process', matchOnDetail: true })
 	}
 
 	async spawnMeasurer() {
 		this.scaphandre = child_process.spawn("sudo", ["-S", "scaphandre", "json", "-t", "18446744073709551615", "-s", "1", "--max-top-consumers", "15"])
 
 		this.scaphandre.stdout.on('data', (data) => {
+			this.orange.appendLine(data)
 			const parsed = JSON.parse(data)
 
 			const powerConsumption = parsed.consumers.find((el: any) => el.pid == this.pid)?.consumption ?? 0
+
 			const watts = powerConsumption / 1000000
 			this.orange.appendLine(`measured: ${watts}W`)
 			

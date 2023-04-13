@@ -3,26 +3,39 @@ import { getUri } from "../../utilities/getUri"
 import { getNonce } from "../../utilities/getNonce"
 
 export class Measurement extends vscode.TreeItem {
-	public total = 0
+	public values: number[] = []
 	public maximum = 0
-	public consumptions: number[] = []
+	public total = 0
+	public length = 0
+
 	public title: string
 
-	public constructor(){
+	public constructor(
+		private process: string,
+		private dateTime: Date
+	){
 		super("", vscode.TreeItemCollapsibleState.None)
-		this.title = "[average: " + this.getAverage() + "W | maximum: " + this.maximum + "W]"
+		this.title = this.getTitle()
 		super.label =  this.title
 		// super.id = id
 	}
 
+	public getTitle() {
+		return this.process + ' @ ' + this.dateTime.toLocaleString() + " [average: " + this.getAverage().toFixed(4).slice(0, 4) + "W | maximum: " + this.maximum.toFixed(4).slice(0, 4) + "W]"
+	}
+
 	public getAverage() {
-		return this.total / this.consumptions.length | 0
+		const avg = this.total / this.length
+		return (isNaN(avg) ? 0 : avg)
 	}
 
 	public addMeasurement(consumption: number) {
-		this.consumptions.push(consumption)
+		this.values.push(consumption)
 		this.total += consumption
 		this.maximum = Math.max(this.maximum, consumption)
+		this.length += 1
+		this.title = this.getTitle()
+		super.label =  this.title
 	}
 
 	public openPanel(extensionUri: vscode.Uri) {
@@ -30,11 +43,23 @@ export class Measurement extends vscode.TreeItem {
 			'my-webview',
 			this.title,
 			vscode.ViewColumn.One,
-			{}
+			{
+				// Enable scripts in the webview
+				enableScripts: true
+			},
 		)
 		
 		
 		panel.webview.html = this._getHtmlForWebview(panel.webview, extensionUri)
+		panel.webview.postMessage({
+			command: 'set',
+			data: {
+				values: this.values,
+				maximum: this.maximum,
+				total: this.total,
+				length: this.length,
+			},
+		})
 	}
 
 	private _getHtmlForWebview(webview: vscode.Webview, extensionUri: vscode.Uri) {

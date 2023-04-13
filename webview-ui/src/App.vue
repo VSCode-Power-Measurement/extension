@@ -1,0 +1,30 @@
+<script setup>
+import { useMeasurement } from '@/stores/measurement'
+import { onMounted } from 'vue'
+import PowerConsumptionGraph from './components/PowerConsumptionGraph.vue'
+import MeasurementTitle from './components/MeasurementTitle.vue'
+
+const type = document.getElementById('app').attributes.type.value
+console.log(type)
+
+const measurement = useMeasurement()
+window.addEventListener('message', event => {
+	const message = event.data
+	switch (message.command) {
+	case 'set':
+		measurement.set(message.data)
+		break	
+	case 'addValue':
+		measurement.addValue(message.data)
+		break
+	}
+})
+</script>
+
+<template>
+	<MeasurementTitle v-if="type === 'measuring'" />
+	<PowerConsumptionGraph />
+</template>
+
+<style scoped>
+</style>
