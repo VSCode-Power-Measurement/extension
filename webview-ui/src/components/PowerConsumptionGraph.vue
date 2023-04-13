@@ -69,16 +69,9 @@ const options = computed(() => { return {
 	plugins: {
 		title: {
 			display: false,
-			color: colors.foreground,
-			text: `Average Power Consumption: ${measurement.maximum / measurement.values.length} W`,
 		},
 		legend: {
 			display: false,
-			position: 'top',
-			align: 'end',
-			labels: {
-				color: colors.foreground,
-			}
 		}
 	},
 	scales: {

@@ -97,7 +97,9 @@ export class MeasurementProvider implements vscode.TreeDataProvider<Measurement>
 			files.forEach((file) => {
 				const filePath = path.join(this.storageUri.fsPath, file)
 				fs.readFile(filePath, 'utf-8', (_, data) => {
-					this.measurements.push(JSON.parse(data))
+					const measuremment = JSON.parse(data)
+					Object.setPrototypeOf(measuremment, Measurement.prototype)
+					this.measurements.push(measuremment)
 				})
 			})
 		})
