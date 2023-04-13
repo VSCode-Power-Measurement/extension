@@ -10,7 +10,7 @@ const title = computed(() => {
 	if (measurement.process === "") {
 		return "Press the start button to start a measurement"
 	}
-	return measurement.process + ' @ ' + measurement.dateTime.toLocaleString() + " [average: " + average.toFixed(4).slice(0, 4) + "W | maximum: " + measurement.maximum.toFixed(4).slice(0, 4) + "W]"
+	return measurement.process + ' @ ' + measurement.dateTime + " [average: " + average.toFixed(4).slice(0, 4) + "W | maximum: " + measurement.maximum.toFixed(4).slice(0, 4) + "W]"
 })
 </script>
 

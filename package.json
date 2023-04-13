@@ -31,7 +31,7 @@
 			"power-measurement": [
 				{
 					"type": "tree",
-					"id": "powerMeasurement.resultsView",
+					"id": "powerMeasurement.measurementView",
 					"name": "Overview"
 				},
 				{
@@ -44,17 +44,17 @@
 		"menus": {
 			"view/title": [
 				{
-					"when": "view == powerMeasurement.resultsView",
+					"when": "view == powerMeasurement.measurementView && false",
 					"command": "powerMeasurement.openMeasurements",
 					"group": "navigation"
 				},
 				{
-					"when": "view == powerMeasurement.resultsView",
+					"when": "view == powerMeasurement.measurementView && false",
 					"command": "powerMeasurement.saveMeasurements",
 					"group": "navigation"
 				},
 				{
-					"when": "view == powerMeasurement.resultsView",
+					"when": "view == powerMeasurement.measurementView",
 					"command": "powerMeasurement.clearMeasurements",
 					"group": "navigation"
 				},
@@ -77,6 +77,31 @@
 					"when": "view == powerMeasurement.measuringView && powerMeasurement.hooked",
 					"command": "powerMeasurement.unhookStopStart",
 					"group": "navigation@1"
+				}
+			],
+			"view/item/context": [
+				{
+					"when": "view == powerMeasurement.measurementView && viewItem == measurement",
+					"command": "powerMeasurement.deleteMeasurement",
+					"group": "inline"
+				},
+				{
+					"when": "view == powerMeasurement.measurementView && viewItem == measurement",
+					"command": "powerMeasurement.deleteMeasurement"
+				},
+				{
+					"when": "view == powerMeasurement.measurementView",
+					"command": "powerMeasurement.deleteMeasurement"
+				},
+				{
+					"when": "true",
+					"command": "powerMeasurement.deleteMeasurement",
+					"group": "navigation"
+				},
+				{
+					"when": "true",
+					"command": "powerMeasurement.deleteMeasurement",
+					"group": "inline"
 				}
 			]
 		},
@@ -122,6 +147,12 @@
 				"category": "Power Measurement",
 				"title": "Clear Measurements",
 				"icon": "$(clear-all)"
+			},
+			{
+				"command": "powerMeasurement.deleteMeasurement",
+				"category": "Power Measurement",
+				"title": "Delete Measurement",
+				"icon": "$(trash)"
 			}
 		]
 	},

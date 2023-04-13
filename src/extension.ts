@@ -2,14 +2,20 @@ import * as vscode from 'vscode'
 import { MeasuringViewProvider } from './views/MeasuringViewProvider'
 import { Measurer } from './Measurer'
 import { MeasurementProvider } from './views/MeasurementProvider'
+import fs = require('fs')
+import { Measurement } from './views/objects/Measurement'
 
 export function activate(context: vscode.ExtensionContext) {
+	const globalStoragePath = context.globalStorageUri.fsPath
+	if (!fs.existsSync(globalStoragePath)) {
+		fs.mkdirSync(globalStoragePath)
+	}
 
 	const measuringViewProvider = new MeasuringViewProvider(context.extensionUri)
-	const measurementProvider = new MeasurementProvider(measuringViewProvider)
+	const measurementProvider = new MeasurementProvider(measuringViewProvider, context.globalStorageUri)
 	const measurer = new Measurer(measurementProvider)
 
-	const measurementTreeView = vscode.window.createTreeView("powerMeasurement.resultsView", { treeDataProvider: measurementProvider})
+	const measurementTreeView = vscode.window.createTreeView("powerMeasurement.measurementView", { treeDataProvider: measurementProvider})
 
 	measurementTreeView.onDidChangeSelection((e) => {
 		const selectedNode = e.selection[0]
@@ -18,6 +24,8 @@ export function activate(context: vscode.ExtensionContext) {
 
 	context.subscriptions.push(
 		vscode.window.registerWebviewViewProvider(MeasuringViewProvider.viewType, measuringViewProvider))
+
+	measurementProvider.loadMeasurements()
 
 	context.subscriptions.push(
 		vscode.commands.registerCommand('powerMeasurement.startMeasurement', () => {
@@ -41,18 +49,24 @@ export function activate(context: vscode.ExtensionContext) {
 
 	context.subscriptions.push(
 		vscode.commands.registerCommand('powerMeasurement.openMeasurements', () => {
-			measuringViewProvider.open()
+			measurementProvider.open()
 		}))
 
 	context.subscriptions.push(
 		vscode.commands.registerCommand('powerMeasurement.saveMeasurements', () => {
-			measuringViewProvider.save()
+			measurementProvider.save()
 		}))
 
 
 	context.subscriptions.push(
 		vscode.commands.registerCommand('powerMeasurement.clearMeasurements', () => {
-			measuringViewProvider.clear()
+			measurementProvider.clearMeasurements()
+		}))
+
+	
+	context.subscriptions.push(
+		vscode.commands.registerCommand('powerMeasurement.deleteMeasurement', (measurement: Measurement) => {
+			measurementProvider.deleteMeasurement(measurement)
 		}))
 
 	context.subscriptions.push(

@@ -11,17 +11,17 @@ export class Measurement extends vscode.TreeItem {
 	public title: string
 
 	public constructor(
-		private process: string,
-		private dateTime: Date
+		public process: string,
+		public dateTime: string
 	){
 		super("", vscode.TreeItemCollapsibleState.None)
 		this.title = this.getTitle()
 		super.label =  this.title
-		// super.id = id
+		// super.id = "measurement"
 	}
 
 	public getTitle() {
-		return this.process + ' @ ' + this.dateTime.toLocaleString() + " [average: " + this.getAverage().toFixed(4).slice(0, 4) + "W | maximum: " + this.maximum.toFixed(4).slice(0, 4) + "W]"
+		return this.process + ' @ ' + this.dateTime + " [average: " + this.getAverage().toFixed(4).slice(0, 4) + "W | maximum: " + this.maximum.toFixed(4).slice(0, 4) + "W]"
 	}
 
 	public getAverage() {

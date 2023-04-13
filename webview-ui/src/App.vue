@@ -5,7 +5,6 @@ import PowerConsumptionGraph from './components/PowerConsumptionGraph.vue'
 import MeasurementTitle from './components/MeasurementTitle.vue'
 
 const type = document.getElementById('app').attributes.type.value
-console.log(type)
 
 const measurement = useMeasurement()
 window.addEventListener('message', event => {

@@ -5,7 +5,7 @@ export const useMeasurement = defineStore('measurement', {
 	state: () => {
 		return {
 			process: "",
-			dateTime: new Date(),
+			dateTime: "",
 			values: [],
 			maximum: 0,
 			total: 0,
