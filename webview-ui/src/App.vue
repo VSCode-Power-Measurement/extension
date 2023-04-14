@@ -22,8 +22,13 @@ window.addEventListener('message', event => {
 
 <template>
 	<MeasurementTitle v-if="type === 'measuring'" />
-	<PowerConsumptionGraph />
+	<div id="measurement-container">
+		<PowerConsumptionGraph />
+	</div>
 </template>
 
 <style scoped>
+	#measurement-container {
+		height: 90vh;
+	}
 </style>

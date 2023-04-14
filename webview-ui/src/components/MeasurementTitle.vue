@@ -15,8 +15,11 @@ const title = computed(() => {
 </script>
 
 <template>
-	{{ title }}
+	<span>{{ title }}</span>
 </template>
 
 <style scoped>
+span {
+  white-space: pre;
+}
 </style>
