@@ -1,7 +1,8 @@
 import * as vscode from 'vscode'
 import * as child_process from 'child_process'
 import * as fs from 'fs'
-import path = require('path')
+import * as os from 'os'
+import * as path from 'path'
 import { MeasurementProvider } from './views/MeasurementProvider'
 
 export class Measurer {
@@ -14,6 +15,7 @@ export class Measurer {
 	constructor(private measurementProvider: MeasurementProvider) {
 		this.setMeasuring(false)
 		this.setHooked(true)
+		this.orange.appendLine("Startup ready!")
 	}
 
 	setMeasuring(state: boolean) {
@@ -99,12 +101,17 @@ export class Measurer {
 			this.orange.appendLine(res || "empty")
 			return false
 		}
-		const noAccess = async (_files: string[]) => {
+		const noAccess = async (files: string[]) => {
 			const message = `Unfortunately you don't have read access to the files we need in ${powercapDir}! You need sudo rights to fix this.`
 			const details = `We need read access to all 'energy_uj' files in ${powercapDir}.`
-			const buttons = [/* {title: "Fix automatically"}, */ {title: "Fix it myself", isCloseAffordance: true}]
+			const buttons = [{title: "Fix automatically"}, {title: "Fix it myself", isCloseAffordance: true}]
 			const res = await vscode.window.showErrorMessage(message, {modal: true, detail: details}, ...buttons)
-			this.orange.appendLine(res?.title || "empty")
+			const button = res?.title
+			this.orange.appendLine(button || "empty")
+			if (button === buttons[0].title) {
+				await this.autoFixPermissions(files)
+				return true
+			}
 			return false
 		}
 
@@ -162,13 +169,13 @@ export class Measurer {
 		// -s is the interval, set to measure every second
 		// Output is JSON, as that's easy to parse in javascript
 		// --max-top-consumers is set to an arbitrary number such that our target program will probably be in it.
-		this.scaphandre = child_process.spawn("sudo", ["-S", "scaphandre", "json", "-t", "18446744073709551615", "-s", "1", "--max-top-consumers", "15"])
+		this.scaphandre = child_process.spawn("scaphandre", ["json", "-t", "18446744073709551615", "-s", "1", "--max-top-consumers", "15"])
 
 		this.scaphandre.stdout.on('data', (data) => {
 			this.orange.appendLine(data)
 			const parsed = JSON.parse(data)
 
-			const powerConsumption = parsed.consumers.find((el: any) => el.pid == this.pid)?.consumption ?? 0
+			const powerConsumption = parsed.consumers.find((el: any) => el.pid.toString() === this.pid)?.consumption ?? 0
 
 			const watts = powerConsumption / 1000000
 			this.orange.appendLine(`measured: ${watts}W`)
@@ -178,9 +185,6 @@ export class Measurer {
 
 		this.scaphandre.stderr.on('data', (data) => {
 			this.orange.appendLine(`stderr output: ${data}`)
-			if (`${data}`.startsWith("[sudo] password for")) {
-				this.askPassword()
-			}
 		})
 
 		this.scaphandre.on('close', (code) => {
