@@ -191,47 +191,68 @@ export class Measurer {
 		})
 	}
 
-	async askPassword() {
-		const options: vscode.InputBoxOptions = {
-			title: "Sudo password",
-			password: true,
-			prompt: "To read power measurements, we need root access. Please fill in your password.",
-		}
+	autoFixPermissions(files: string[]) {
+		return new Promise((resolve, reject) => {
+			const gid = os.userInfo().gid.toString()
+			const filesStr = files.join(" ")
+			const sudo = child_process.spawn("sudo", ["-S", "sh", "-c", `chgrp ${gid} ${filesStr} && chmod g+r ${filesStr}`])
 
-		this.orange.appendLine(`Asking user for password...`)
-		const password = await vscode.window.showInputBox(options)
+			sudo.stderr.on('data', (data) => {
+				this.orange.appendLine(`stderr output: ${data}`)
+				if (`${data}`.startsWith("[sudo] password for")) {
+					const options: vscode.InputBoxOptions = {
+						title: "Sudo password",
+						password: true,
+						prompt: "To read power measurements, we need root access. Please fill in your password.",
+					}
 
-		if (!this.scaphandre) {
-			this.orange.appendLine(`Scaphandre somehow didn't start, ignoring`)
-			return
-		}
+					this.orange.appendLine(`Asking user for password...`)
+					vscode.window.showInputBox(options).then(password => sudo.stdin.write(`${password}\n`))
+				} else {
+					reject(data)
+				}
+			})
 
-		this.scaphandre.stdin.write(`${password}\n`)
+			sudo.on('close', (code) => {
+				this.orange.appendLine(`child process exited with code ${code}`)
+				if (code === 0) {
+					resolve(null)
+				} else {
+					reject(code)
+				}
+			})
+		})
 	}
 }
 
 /// Breadth-first algorithm for recursively searching a folder for files with the specified name
 async function* searchFiles(start: string, filename: string): AsyncGenerator<string> {
-	const promises: Set<Promise<fs.Dirent[]>> = new Set()
+	type Result = {
+		dir: string,
+		ents: fs.Dirent[],
+	}
+	const promises: Set<Promise<Result>> = new Set()
 
 	const ls = async (dir: string) => {
-		const promise = fs.promises.readdir(dir, { withFileTypes: true })
+		const promise = (async () => {return {
+			dir: dir,
+			ents: await fs.promises.readdir(dir, { withFileTypes: true }),
+		}})()
 		promises.add(promise)
-		const result = await promise
+		await promise
 		promises.delete(promise)
-		return result
 	}
 
-	promises.add(ls(start))
+	ls(start)
 
 	while (promises.size > 0) {
-		const dirents = await Promise.race(promises)
-		for (const dirent of dirents) {
-			const res = path.resolve(start, dirent.name)
+		const res = await Promise.race(promises)
+		for (const dirent of res.ents) {
+			const file = path.resolve(res.dir, dirent.name)
 			if (dirent.isDirectory()) {
-				promises.add(ls(res))
+				ls(file)
 			} else if (dirent.name === filename) {
-				yield res
+				yield file
 			}
 		}
 	}
