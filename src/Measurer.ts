@@ -12,9 +12,10 @@ export class Measurer {
 	private pid = ""
 	private orange = vscode.window.createOutputChannel("Orange")
 
-	constructor(private measurementProvider: MeasurementProvider) {
+	constructor(private measurementProvider: MeasurementProvider, private extensionPath: string) {
 		this.setMeasuring(false)
 		this.setHooked(true)
+		this.orange.appendLine(extensionPath)
 		this.orange.appendLine("Startup ready!")
 	}
 
@@ -52,7 +53,7 @@ export class Measurer {
 		if (selection.detail !== undefined) {
 			this.measurementProvider.startNewMeasurement(selection.detail)
 		}
-		this.spawnMeasurer()
+		this.spawnMeasurer(this.pid)
 
 		this.setMeasuring(true)
 	}
@@ -163,13 +164,12 @@ export class Measurer {
 		return vscode.window.showQuickPick(items, { placeHolder: 'Select a process', matchOnDetail: true })
 	}
 
-	async spawnMeasurer() {
-		// -t is the time the measurement keeps running, set to the largest number it should accept
-		// so it keeps running until we stop it.
+	async spawnMeasurer(pid: string) {
+		// --pid outputs power measurements for a specific process
 		// -s is the interval, set to measure every second
 		// Output is JSON, as that's easy to parse in javascript
 		// --max-top-consumers is set to an arbitrary number such that our target program will probably be in it.
-		this.scaphandre = child_process.spawn("scaphandre", ["json", "-t", "18446744073709551615", "-s", "1", "--max-top-consumers", "15"])
+		this.scaphandre = child_process.spawn(path.join(this.extensionPath, "scaphandre"), ["json", "--pid", pid, "-s", "1", "--max-top-consumers", "15"])
 
 		this.scaphandre.stdout.on('data', (data) => {
 			this.orange.appendLine(data)

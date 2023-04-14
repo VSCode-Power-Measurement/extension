@@ -13,7 +13,7 @@ export function activate(context: vscode.ExtensionContext) {
 
 	const measuringViewProvider = new MeasuringViewProvider(context.extensionUri)
 	const measurementProvider = new MeasurementProvider(measuringViewProvider, context.globalStorageUri)
-	const measurer = new Measurer(measurementProvider)
+	const measurer = new Measurer(measurementProvider, context.extensionPath)
 
 	const measurementTreeView = vscode.window.createTreeView("powerMeasurement.measurementView", { treeDataProvider: measurementProvider})
 
@@ -63,7 +63,7 @@ export function activate(context: vscode.ExtensionContext) {
 			measurementProvider.clearMeasurements()
 		}))
 
-	
+
 	context.subscriptions.push(
 		vscode.commands.registerCommand('powerMeasurement.deleteMeasurement', (measurement: Measurement) => {
 			measurementProvider.deleteMeasurement(measurement)
