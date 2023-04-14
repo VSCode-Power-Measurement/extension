@@ -7,6 +7,7 @@ import MeasurementTitle from './components/MeasurementTitle.vue'
 const type = document.getElementById('app').attributes.type.value
 
 const measurement = useMeasurement()
+
 window.addEventListener('message', event => {
 	const message = event.data
 	switch (message.command) {

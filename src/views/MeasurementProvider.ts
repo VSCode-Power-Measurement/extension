@@ -128,7 +128,6 @@ export class MeasurementProvider implements vscode.TreeDataProvider<Measurement>
 	}
 
 	getChildren(): vscode.ProviderResult<Measurement[]> {
-		console.log(this.measurements)
 		return Promise.resolve(this.measurements)
 	}
 

@@ -3,6 +3,10 @@ import { defineStore } from 'pinia'
 
 export const useMeasurement = defineStore('measurement', {
 	state: () => {
+		const previousState = window.vscode.getState()
+		if (previousState) {
+			return previousState
+		}
 		return {
 			process: "",
 			dateTime: "",
@@ -18,6 +22,7 @@ export const useMeasurement = defineStore('measurement', {
 			this.maximum = Math.max(this.maximum, value)
 			this.total += value
 			this.length += 1
+			this.saveState()
 		},
 		set(data) {
 			this.process = data.process
@@ -26,6 +31,17 @@ export const useMeasurement = defineStore('measurement', {
 			this.maximum = data.maximum
 			this.total = data.total
 			this.length = data.length
+			this.saveState()
+		},
+		saveState() {
+			window.vscode.setState({
+				process: this.process,
+				dateTime: this.dateTime,
+				values: this.values,
+				maximum: this.maximum,
+				total: this.total,
+				length: this.length,
+			})
 		}
 	},
 })
