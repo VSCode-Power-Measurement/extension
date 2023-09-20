@@ -64,8 +64,8 @@ export class Measurement extends vscode.TreeItem {
 
 	private _getHtmlForWebview(webview: vscode.Webview, extensionUri: vscode.Uri) {
 		// Get references to local files
-		const scriptUri = getUri(webview,  extensionUri, ["webview-ui", "dist", "assets", "index.js"])
-		const stylesUri = getUri(webview, extensionUri, ["webview-ui", "dist", "assets", "index.css"])
+		const scriptUri = getUri(webview,  extensionUri, ["webview-dist", "index.js"])
+		const stylesUri = getUri(webview, extensionUri, ["webview-dist", "index.css"])
 
 		// Use a nonce to only allow a specific script to be run.
 		const scriptNonce = getNonce()

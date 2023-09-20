@@ -70,7 +70,8 @@ export function activate(context: vscode.ExtensionContext) {
 		}))
 
 	context.subscriptions.push(
-		vscode.debug.onDidStartDebugSession((_) => {
+		vscode.debug.onDidStartDebugSession((session) => {
+			console.log(session.id)
 			if (measurer.isHooked()) {
 				measurer.start()
 			}

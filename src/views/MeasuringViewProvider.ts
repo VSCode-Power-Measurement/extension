@@ -45,8 +45,8 @@ export class MeasuringViewProvider implements vscode.WebviewViewProvider {
 
 	private _getHtmlForWebview(webview: vscode.Webview) {
 		// Get references to local files
-		const scriptUri = getUri(webview, this._extensionUri, ["webview-ui", "dist", "assets", "index.js"])
-		const stylesUri = getUri(webview, this._extensionUri, ["webview-ui", "dist", "assets", "index.css"])
+		const scriptUri = getUri(webview, this._extensionUri, ["webview-dist", "index.js"])
+		const stylesUri = getUri(webview, this._extensionUri, ["webview-dist", "index.css"])
 
 		// Use a nonce to only allow a specific script to be run.
 		const scriptNonce = getNonce()

@@ -139,3 +139,6 @@ dist
 *.njsproj
 *.sln
 *.sw?
+
+# Custom direcotries
+webview-dist/*

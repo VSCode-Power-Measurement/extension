@@ -1,7 +1,7 @@
 {
-	"name": "vscode-power-measurement",
-	"displayName": "VSCode Power Measurement",
-	"description": "Gives power usage statistics when you run programs in VSCode",
+	"name": "power-measurement",
+	"displayName": "Power Measurement",
+	"description": "Gives power usage statistics when debugging programs in VSCode",
 	"version": "0.0.1",
 	"publisher": "vscode-power-measurement",
 	"license": "MIT",
